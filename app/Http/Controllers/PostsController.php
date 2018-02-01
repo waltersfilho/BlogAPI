@@ -3,10 +3,14 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Events\HelloPusherEvent;
 
 use App\Post;
 
 use Illuminate\Support\Facades\Validator;
+
+use App\User;
+use Illuminate\Support\Facades\Auth;
 
 class PostsController extends Controller
 {
@@ -17,7 +21,8 @@ class PostsController extends Controller
      */
     public function index()
     {
-        $posts = Post::with('comments')->get();
+
+        $posts = Post::with('comments', 'user')->get();
 
         return response($posts);
     }
@@ -40,12 +45,17 @@ class PostsController extends Controller
      */
     public function store(Request $request)
     {
+
+        $user = Auth::user();
+        error_log($user->getAuthIdentifier());
+
         $rules = array(
             'title' => 'required|min:5|max:255',
             'body' => 'required|min:10'
         );
 
-        error_log(implode("",$request->all()));
+        error_log(request('title'));
+        error_log(request('body'));
 
         $validator = Validator::make($request->all(), $rules);
         if ($validator->fails()){
@@ -55,11 +65,13 @@ class PostsController extends Controller
         $post = new Post();
         $post->title = $request->title;
         $post->body = $request->body;
+        $post->user_id = $user->getAuthIdentifier();
+        error_log($post);
 
         $post->save();
-
+        event(new HelloPusherEvent('Post Created!'));
         return response()->json(['message' => 'Post created']);
-        error_log($post);
+
 
 
     }
@@ -76,6 +88,8 @@ class PostsController extends Controller
 
         if ($post == null)
             return response()->json(['message' => 'Post not found']);
+
+        $post->user = User::find($post->user_id);
 
         return response($post);
     }
@@ -100,7 +114,6 @@ class PostsController extends Controller
      */
     public function update(Request $request, $id)
     {
-
         $rules = array(
             'title' => 'required|min:5|max:255',
             'body' => 'required|min:10'

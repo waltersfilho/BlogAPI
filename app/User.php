@@ -10,6 +10,10 @@ class User extends Authenticatable
 {
     use HasApiTokens, Notifiable;
 
+    public function posts(){
+        $this->hasMany('App\Post');
+    }
+
     protected $fillable = [
         'name', 'email', 'password',
     ];

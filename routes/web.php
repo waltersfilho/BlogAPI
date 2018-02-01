@@ -15,4 +15,7 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-
+Route::get('/pusher', function() {
+    event(new App\Events\HelloPusherEvent('Hi there Pusher!'));
+    return "Event has been sent!";
+});
